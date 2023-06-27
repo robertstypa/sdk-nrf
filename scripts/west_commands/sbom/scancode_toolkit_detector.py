@@ -64,53 +64,54 @@ def detect(data: Data, optional: bool):
     decoded = map(run_scancode, filtered)
 
     for result, file in zip(decoded, filtered):
-        for i in result['files'][0]['licenses']:
+        if 'licenses' in result['files'][0]:
+            for i in result['files'][0]['licenses']:
 
-            friendly_id = ''
-            if 'spdx_license_key' in i and i['spdx_license_key'] != '':
-                friendly_id = i['spdx_license_key']
-            elif 'key' in i and i['key'] != '':
-                friendly_id = i['key']
-            id = friendly_id.upper()
-            if id in ('UNKNOWN-SPDX', 'LICENSEREF-SCANCODE-UNKNOWN-SPDX'):
-                friendly_id = re.sub(r'SPDX-License-Identifier:', '', i['matched_text'],
-                                     flags=re.I).strip()
+                friendly_id = ''
+                if 'spdx_license_key' in i and i['spdx_license_key'] != '':
+                    friendly_id = i['spdx_license_key']
+                elif 'key' in i and i['key'] != '':
+                    friendly_id = i['key']
                 id = friendly_id.upper()
-            if id == '':
-                log.wrn(f'Invalid response from scancode-toolkit, file: {file.file_path}')
-                continue
+                if id in ('UNKNOWN-SPDX', 'LICENSEREF-SCANCODE-UNKNOWN-SPDX'):
+                    friendly_id = re.sub(r'SPDX-License-Identifier:', '', i['matched_text'],
+                                         flags=re.I).strip()
+                    id = friendly_id.upper()
+                if id == '':
+                    log.wrn(f'Invalid response from scancode-toolkit, file: {file.file_path}')
+                    continue
 
-            file.licenses.add(id)
-            file.detectors.add('scancode-toolkit')
+                file.licenses.add(id)
+                file.detectors.add('scancode-toolkit')
 
-            if not is_spdx_license(id):
-                if 'name' in i:
-                    name = i['name']
-                elif 'short_name' in i:
-                    name = i['short_name']
-                else:
-                    name = None
+                if not is_spdx_license(id):
+                    if 'name' in i:
+                        name = i['name']
+                    elif 'short_name' in i:
+                        name = i['short_name']
+                    else:
+                        name = None
 
-                if 'spdx_url' in i:
-                    url = i['spdx_url']
-                elif 'reference_url' in i:
-                    url = i['reference_url']
-                elif 'scancode_text_url' in i:
-                    url = i['scancode_text_url']
-                else:
-                    url = None
+                    if 'spdx_url' in i:
+                        url = i['spdx_url']
+                    elif 'reference_url' in i:
+                        url = i['reference_url']
+                    elif 'scancode_text_url' in i:
+                        url = i['scancode_text_url']
+                    else:
+                        url = None
 
-                if id in data.licenses:
-                    license = data.licenses[id]
-                    if license.is_expr:
-                        continue
-                else:
-                    license = License()
-                    data.licenses[id] = license
-                    license.id = id
-                    license.friendly_id = friendly_id
-                if license.name is None:
-                    license.name = name
-                if license.url is None:
-                    license.url = url
-                license.detectors.add('scancode-toolkit')
+                    if id in data.licenses:
+                        license = data.licenses[id]
+                        if license.is_expr:
+                            continue
+                    else:
+                        license = License()
+                        data.licenses[id] = license
+                        license.id = id
+                        license.friendly_id = friendly_id
+                    if license.name is None:
+                        license.name = name
+                    if license.url is None:
+                        license.url = url
+                    license.detectors.add('scancode-toolkit')
