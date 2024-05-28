@@ -176,42 +176,35 @@ function(suit_create_package)
   foreach(image ${IMAGES})
     sysbuild_get(BINARY_DIR IMAGE ${image} VAR APPLICATION_BINARY_DIR CACHE)
     sysbuild_get(BINARY_FILE IMAGE ${image} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
+    sysbuild_get(target IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET KCONFIG)
 
     set(BINARY_FILE "${BINARY_FILE}.bin")
 
     list(APPEND CORE_ARGS
-      --core ${image},${SUIT_ROOT_DIRECTORY}${image}.bin,${BINARY_DIR}/zephyr/edt.pickle,${BINARY_DIR}/zephyr/.config
+      --core ${target},${SUIT_ROOT_DIRECTORY}${target}.bin,${BINARY_DIR}/zephyr/edt.pickle,${BINARY_DIR}/zephyr/.config
     )
-    suit_copy_artifact_to_output_directory(${image} ${BINARY_DIR}/zephyr/${BINARY_FILE})
+    suit_copy_artifact_to_output_directory(${target} ${BINARY_DIR}/zephyr/${BINARY_FILE})
   endforeach()
 
   foreach(image ${IMAGES})
     sysbuild_get(GENERATE_LOCAL_ENVELOPE IMAGE ${image} VAR CONFIG_SUIT_LOCAL_ENVELOPE_GENERATE KCONFIG)
-    if(NOT DEFINED GENERATE_LOCAL_ENVELOPE)
+    if(NOT DEFINED GENERATE_LOCAL_ENVELOPE OR NOT GENERATE_LOCAL_ENVELOPE)
       continue()
     endif()
-    unset(GENERATE_LOCAL_ENVELOPE)
 
     sysbuild_get(INPUT_ENVELOPE_JINJA_FILE IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TEMPLATE KCONFIG)
     sysbuild_get(target IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET KCONFIG)
     sysbuild_get(BINARY_DIR IMAGE ${image} VAR APPLICATION_BINARY_DIR CACHE)
-    sysbuild_get(BINARY_FILE IMAGE ${image} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
     suit_copy_input_template(${INPUT_TEMPLATES_DIRECTORY} "${INPUT_ENVELOPE_JINJA_FILE}" ENVELOPE_JINJA_FILE)
     if(NOT DEFINED ENVELOPE_JINJA_FILE)
       message(SEND_ERROR "DFU: Creation of SUIT artifacts failed.")
       return()
     endif()
     suit_check_template_digest(${INPUT_TEMPLATES_DIRECTORY} "${INPUT_ENVELOPE_JINJA_FILE}")
-    set(BINARY_FILE "${BINARY_FILE}.bin")
-
-    list(APPEND CORE_ARGS
-      --core ${target},${SUIT_ROOT_DIRECTORY}${target}.bin,${BINARY_DIR}/zephyr/edt.pickle,${BINARY_DIR}/zephyr/.config
-    )
 
     set(ENVELOPE_YAML_FILE ${SUIT_ROOT_DIRECTORY}${target}.yaml)
     set(ENVELOPE_SUIT_FILE ${SUIT_ROOT_DIRECTORY}${target}.suit)
 
-    suit_copy_artifact_to_output_directory(${target} ${BINARY_DIR}/zephyr/${BINARY_FILE})
     suit_render_template(${ENVELOPE_JINJA_FILE} ${ENVELOPE_YAML_FILE} "${CORE_ARGS}")
     suit_create_envelope(${ENVELOPE_YAML_FILE} ${ENVELOPE_SUIT_FILE} ${ENVELOPE_SHALL_BE_SIGNED})
     list(APPEND STORAGE_BOOT_ARGS
@@ -275,10 +268,9 @@ function(suit_setup_merge)
     set(ARTIFACTS_TO_MERGE)
 
     sysbuild_get(GENERATE_LOCAL_ENVELOPE IMAGE ${image} VAR CONFIG_SUIT_LOCAL_ENVELOPE_GENERATE KCONFIG)
-    if(NOT DEFINED GENERATE_LOCAL_ENVELOPE)
+    if(NOT DEFINED GENERATE_LOCAL_ENVELOPE OR NOT GENERATE_LOCAL_ENVELOPE)
       continue()
     endif()
-    unset(GENERATE_LOCAL_ENVELOPE)
 
     sysbuild_get(IMAGE_BINARY_DIR IMAGE ${image} VAR APPLICATION_BINARY_DIR CACHE)
     sysbuild_get(IMAGE_BINARY_FILE IMAGE ${image} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
