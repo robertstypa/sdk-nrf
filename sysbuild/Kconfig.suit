@@ -296,4 +296,9 @@ config FLASH_COMPANION_TARGET_CPUCLUSTER
 
 endif # SUIT_BUILD_FLASH_COMPANION
 
+config SUIT_BUILD_AB_UPDATE
+	bool "Build AB variant"
+	help
+	  Build two applications for the A and B update.
+
 endmenu

@@ -1,0 +1,5 @@
+/ {
+	chosen {
+		zephyr,code-partition = &cpuapp_slot1_partition;
+	};
+};
