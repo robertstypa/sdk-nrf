@@ -1,0 +1,5 @@
+/{
+    chosen {
+        zephyr,suit-image = &suit_image_a;
+    };      
+};

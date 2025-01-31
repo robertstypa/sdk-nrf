@@ -11,12 +11,19 @@
 # - If the candidate only contains the application core image, it is ensured that
 #   the semantic version of the candidate application manifest exactly
 #   matches the installed radio manifest semantic version.
+{%- if 'zephyr,suit-image' in application['dt'].chosen_nodes and 'suit_image_b' in application['dt'].chosen_nodes['zephyr,suit-image'].labels %}
+# image B
+{%- else %}
+# image A
+{%- endif %}
 {%- set component_index = 0 %}
 {%- set component_list = [] %}
 {%- set mpi_root_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_ROOT_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_root_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_ROOT_CLASS_NAME']|default('nRF54H20_sample_root') %}
 {%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_app') %}
+{%- set mpi_application_b_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_VENDOR_NAME'] %}
+{%- set mpi_application_b_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_CLASS_NAME'] %}
 {%- set mpi_radio_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_radio_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_rad') %}
 {%- if RAD_LOCAL_1_VERSION is defined %}
@@ -72,6 +79,14 @@ SUIT_Envelope_Tagged:
         - RFC4122_UUID:
             namespace: {{ mpi_application_vendor_name }}
             name: {{ mpi_application_class_name }}
+{%- endif %}
+{%- if application_b is defined %}
+    {%- set component_index = component_index + 1 %}
+    {%- set app_b_component_index = component_index %}
+      - - INSTLD_MFST
+        - RFC4122_UUID:
+            namespace: {{ mpi_application_b_vendor_name }}
+            name: {{ mpi_application_b_class_name }}
 {%- endif %}
 {%- if radio is defined %}
     {%- set component_index = component_index + 1 %}
@@ -502,6 +517,9 @@ SUIT_Envelope_Tagged:
 {%- endif %}
 {%- if application is defined %}
     '#{{ application['name'] }}': {{ artifacts_folder ~ application['name'] }}.suit
+{%- endif %}
+{%- if application_b is defined %}
+    '#{{ application_b['name'] }}': {{ artifacts_folder ~ application_b['name'] }}.suit
 {%- endif %}
 {%- if nordic_top %}
     '#top': {{ sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] }}/nordic_top.suit
