@@ -1,3 +1,8 @@
+{%- if 'cpuapp_slot1_partition' in target_xxx['dt'].chosen_nodes['zephyr,code-partition'].labels %}
+# image_b
+{%- else %}
+# image_a
+{%- endif %}
 {%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_VENDOR_NAME']|default('nordicsemi_xxx.com') %}
 {%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_CLASS_NAME']|default('nRF54H20_sample_app_xxx') %}
 SUIT_Envelope_Tagged:

@@ -1,9 +1,16 @@
+{%- if 'cpuapp_slot1_partition' in target['dt'].chosen_nodes['zephyr,code-partition'].labels %}
+{%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_CLASS_NAME']|default('nRF54H20_sample_app') %}
+{%- else %}
 {%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_app') %}
-{%- set suit_artifacts_base_dir = ( application['binary'].split('/')[:-1] | join('/') ) %}
-{%- if 'CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT' in application['config'] and application['config']['CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT'] != '' %}
+{%- endif %}
+
+
+{%- set suit_artifacts_base_dir = ( target['binary'].split('/')[:-1] | join('/') ) %}
+{%- if 'CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT' in target['config'] and target['config']['CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT'] != '' %}
   {%- set encrypted = True %}
-  {%- set app_encryption_dir = ( suit_artifacts_base_dir ) + "/" + ( application['name'] ) + "_encryption_artifacts" %}
+  {%- set app_encryption_dir = ( suit_artifacts_base_dir ) + "/" + ( target['name'] ) + "_encryption_artifacts" %}
 {%- else %}
   {%- set encrypted = False %}
 {%- endif %}
@@ -23,9 +30,9 @@ SUIT_Envelope_Tagged:
     suit-common:
       suit-components:
       - - MEM
-        - {{ application['dt'].label2node['cpu'].unit_addr }}
-        - {{ get_absolute_address(application['dt'].chosen_nodes['zephyr,code-partition']) }}
-        - {{ application['dt'].chosen_nodes['zephyr,code-partition'].regs[0].size }}
+        - {{ target['dt'].label2node['cpu'].unit_addr }}
+        - {{ get_absolute_address(target['dt'].chosen_nodes['zephyr,code-partition']) }}
+        - {{ target['dt'].chosen_nodes['zephyr,code-partition'].regs[0].size }}
       - - CAND_IMG
         - 0
       suit-shared-sequence:
@@ -43,13 +50,13 @@ SUIT_Envelope_Tagged:
 {%- if encrypted %}
               file_direct: {{ app_encryption_dir }}/plain_text_digest.bin
 {%- else %}
-              file: {{ application['binary'] }}
+              file: {{ target['binary'] }}
 {%- endif %}
           suit-parameter-image-size:
 {%- if encrypted %}
             file_direct: {{ app_encryption_dir }}/plain_text_size.txt
 {%- else %}
-            file: {{ application['binary'] }}
+            file: {{ target['binary'] }}
 {%- endif %}
       - suit-condition-vendor-identifier:
         - suit-send-record-success
@@ -92,15 +99,15 @@ SUIT_Envelope_Tagged:
     suit-install:
     - suit-directive-set-component-index: 1
     - suit-directive-override-parameters:
-{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI' in application['config'] and application['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] != '' %}
-        suit-parameter-uri: '{{ application['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] }}'
+{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI' in target['config'] and target['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] != '' %}
+        suit-parameter-uri: '{{ target['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] }}'
 {%- else %}
-        suit-parameter-uri: '#{{ application['name'] }}'
+        suit-parameter-uri: '#{{ target['name'] }}'
 {%- endif %}
         suit-parameter-image-digest:
           suit-digest-algorithm-id: cose-alg-sha-256
           suit-digest-bytes:
-            file: {{ application['binary'] }}
+            file: {{ target['binary'] }}
     - suit-directive-fetch:
       - suit-send-record-failure
     - suit-directive-try-each:
@@ -148,15 +155,15 @@ SUIT_Envelope_Tagged:
     suit-candidate-verification:
     - suit-directive-set-component-index: 1
     - suit-directive-override-parameters:
-{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI' in application['config'] and application['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] != '' %}
-        suit-parameter-uri: '{{ application['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] }}'
+{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI' in target['config'] and target['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] != '' %}
+        suit-parameter-uri: '{{ target['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE_URI'] }}'
 {%- else %}
-        suit-parameter-uri: '#{{ application['name'] }}'
+        suit-parameter-uri: '#{{ target['name'] }}'
 {%- endif %}
         suit-parameter-image-digest:
           suit-digest-algorithm-id: cose-alg-sha-256
           suit-digest-bytes:
-            file: {{ application['binary'] }}
+            file: {{ target['binary'] }}
 {%- if encrypted %}
     # For the encrypted image this fetch directive is used to verify the tag and the AAD
     # of the received encrypted image The target "CAND_IMG" behaves like a /dev/null device
@@ -192,14 +199,14 @@ SUIT_Envelope_Tagged:
         name: {{ mpi_application_class_name }}
   suit-text:
     en:
-      '["MEM", {{ application['dt'].label2node['cpu'].unit_addr }}, {{ get_absolute_address(application['dt'].chosen_nodes['zephyr,code-partition']) }}, {{ application['dt'].chosen_nodes['zephyr,code-partition'].regs[0].size }}]':
+      '["MEM", {{ target['dt'].label2node['cpu'].unit_addr }}, {{ get_absolute_address(target['dt'].chosen_nodes['zephyr,code-partition']) }}, {{ application['dt'].chosen_nodes['zephyr,code-partition'].regs[0].size }}]':
         suit-text-vendor-name: Nordic Semiconductor ASA
         suit-text-model-name: nRF54H20_cpuapp
         suit-text-vendor-domain: nordicsemi.com
         suit-text-model-info: The nRF54H20 application core
         suit-text-component-description: Sample application core FW
         suit-text-component-version: v1.0.0
-{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE' not in application['config'] or application['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE'] == '' %}
+{%- if 'CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE' not in target['config'] or target['config']['CONFIG_SUIT_DFU_CACHE_EXTRACT_IMAGE'] == '' %}
   suit-integrated-payloads:
-    '#{{ application['name'] }}': {{ application['binary'] }}
+    '#{{ target['name'] }}': {{ target['binary'] }}
 {%- endif %}
