@@ -1,7 +1,7 @@
-.. _nrf54h_suit_sample:
+.. _nrf54h_suit_ab_sample:
 
-SUIT: Device firmware update on the nRF54H20 SoC
-################################################
+SUIT: Device firmware A/B update on the nRF54H20 SoC
+####################################################
 
 .. contents::
    :local:
