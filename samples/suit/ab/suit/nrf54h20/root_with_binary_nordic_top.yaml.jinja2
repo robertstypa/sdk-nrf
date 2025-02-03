@@ -11,6 +11,7 @@
 {%- else %}
   {%- set nordic_top = False %}
 {%- endif %}
+
 SUIT_Envelope_Tagged:
   suit-authentication-wrapper:
     SuitDigest:
@@ -137,6 +138,23 @@ SUIT_Envelope_Tagged:
     - suit-directive-set-component-index: 0
     - suit-directive-override-parameters:
         suit-parameter-uri: "#{{ application['name'] }}"
+    - suit-directive-fetch:
+      - suit-send-record-failure
+    - suit-condition-dependency-integrity:
+      - suit-send-record-success
+      - suit-send-record-failure
+      - suit-send-sysinfo-success
+      - suit-send-sysinfo-failure
+    - suit-directive-process-dependency:
+      - suit-send-record-success
+      - suit-send-record-failure
+      - suit-send-sysinfo-success
+      - suit-send-sysinfo-failure
+{%- endif %}
+{%- if nordic_top %}
+    - suit-directive-set-component-index: 0
+    - suit-directive-override-parameters:
+        suit-parameter-uri: '#top'
     - suit-directive-fetch:
       - suit-send-record-failure
     - suit-condition-dependency-integrity:
