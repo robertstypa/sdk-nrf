@@ -1,5 +1,0 @@
-/ {
-	chosen {
-		zephyr,code-partition = &cpurad_slot1_partition;
-	};
-};
