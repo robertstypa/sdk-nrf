@@ -41,7 +41,7 @@ if(SB_CONFIG_SUIT_BUILD_RECOVERY)
 endif()
 
 if(SB_CONFIG_SUIT_BUILD_AB_UPDATE)
-  
+
   set(SAMPLE_SOURCE_DIR ${APP_DIR})
 
   set(APP_IMAGE ${DEFAULT_IMAGE}_slot_b)
@@ -51,7 +51,6 @@ if(SB_CONFIG_SUIT_BUILD_AB_UPDATE)
   list(GET split_board_qualifiers 2 target_cpucluster)
 
   set(BOARD_TARGET "${BOARD}/${target_soc}/${target_cpucluster}")
-  
 
   ExternalZephyrProject_Add(
     APPLICATION ${APP_IMAGE}
@@ -62,7 +61,7 @@ if(SB_CONFIG_SUIT_BUILD_AB_UPDATE)
 
   set_config_string(${APP_IMAGE} CONFIG_SUIT_ENVELOPE_TARGET "application_b")
   set_config_bool(${APP_IMAGE} CONFIG_NRF_REGTOOL_GENERATE_UICR n)
-  
+
   # Choose slot_b_partition as the active code partition
   add_overlay_dts(${APP_IMAGE} "${SAMPLE_SOURCE_DIR}/sysbuild/ab_images_b.overlay")
 
@@ -85,5 +84,5 @@ if(SB_CONFIG_SUIT_BUILD_AB_UPDATE)
     add_overlay_dts(${NET_IMAGE} "${SAMPLE_SOURCE_DIR}/sysbuild/hci_ipc.overlay")   
     add_overlay_dts(${NET_IMAGE} "${SAMPLE_SOURCE_DIR}/sysbuild/ab_images_b_net.overlay")     
   endif()
-  
+
 endif()
