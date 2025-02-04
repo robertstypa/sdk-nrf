@@ -64,3 +64,23 @@
 		zephyr,uart-mcumgr = &uart136;
 	};
 };
+
+/* UART 1 is configured for App Core console output. In order to use it for other
+ * purpose, i.e. to output logs form the Radio core, remove section below.
+ */
+&uart135 {
+	status = "okay";
+	memory-regions = <&cpuapp_dma_region>;
+	current-speed = <115200>;
+	pinctrl-0 = <&uart135_default>;
+	pinctrl-1 = <&uart135_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	/delete-property/ hw-flow-control;
+};
+
+/ {
+	chosen {
+		zephyr,console = &uart135;
+	};
+};
