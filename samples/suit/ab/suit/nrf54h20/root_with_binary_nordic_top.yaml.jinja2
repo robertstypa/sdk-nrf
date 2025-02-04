@@ -1,3 +1,12 @@
+# My name is application image B, my artifacts are available for you: 
+# name: {{ application_b['name']}}
+# binary path: {{ application_b['binary']}}
+# suit envelope: {{ artifacts_folder ~ application_b['name'] }}.suit
+# My name is radio image B, my artifacts are available for you:
+# name: {{ radio_b['name']}}
+# binary path: {{ radio_b['binary']}}
+# suit envelope: {{ artifacts_folder ~ radio_b['name'] }}.suit
+
 {%- set component_index = 0 %}
 {%- set component_list = [] %}
 {%- set mpi_root_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_ROOT_VENDOR_NAME']|default('nordicsemi.com') %}
