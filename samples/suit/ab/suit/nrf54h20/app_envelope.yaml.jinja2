@@ -1,9 +1,14 @@
+{%- if 'cpuapp_slot_b_partition' in target['dt'].chosen_nodes['zephyr,code-partition'].labels %}
+{%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_CLASS_NAME']|default('nRF54H20_sample_app') %}
+{%- else %}
 {%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_app') %}
-{%- set suit_artifacts_base_dir = ( application['binary'].split('/')[:-1] | join('/') ) %}
-{%- if 'CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT' in application['config'] and application['config']['CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT'] != '' %}
+{%- endif %}
+{%- set suit_artifacts_base_dir = ( target['binary'].split('/')[:-1] | join('/') ) %}
+{%- if 'CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT' in target['config'] and target['config']['CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT'] != '' %}
   {%- set encrypted = True %}
-  {%- set app_encryption_dir = ( suit_artifacts_base_dir ) + "/" + ( application['name'] ) + "_encryption_artifacts" %}
+  {%- set app_encryption_dir = ( suit_artifacts_base_dir ) + "/" + ( target['name'] ) + "_encryption_artifacts" %}
 {%- else %}
   {%- set encrypted = False %}
 {%- endif %}
@@ -24,13 +29,13 @@ SUIT_Envelope_Tagged:
     suit-common:
       suit-components:
       - - MEM
-        - {{ application['dt'].label2node['cpu'].unit_addr }}
-        - {{ get_absolute_address(application['dt'].get_node('suit-active-code-partition')) }}
-        - {{ application['dt'].get_node('suit-active-code-partition').regs[0].size }}
+        - {{ target['dt'].label2node['cpu'].unit_addr }}
+        - {{ get_absolute_address(target['dt'].get_node('suit-active-code-partition')) }}
+        - {{ target['dt'].get_node('suit-active-code-partition').regs[0].size }}
       - - MEM
-        - {{ application['dt'].label2node['cpu'].unit_addr }}
-        - {{ get_absolute_address(application['dt'].get_node('suit-inactive-code-partition')) }}
-        - {{ application['dt'].get_node('suit-inactive-code-partition').regs[0].size }}
+        - {{ target['dt'].label2node['cpu'].unit_addr }}
+        - {{ get_absolute_address(target['dt'].get_node('suit-inactive-code-partition')) }}
+        - {{ target['dt'].get_node('suit-inactive-code-partition').regs[0].size }}
       suit-shared-sequence:
       - suit-directive-set-component-index: [0, 1]
       - suit-directive-override-parameters:
@@ -46,13 +51,13 @@ SUIT_Envelope_Tagged:
 {%- if encrypted %}
               file_direct: {{ app_encryption_dir }}/plain_text_digest.bin
 {%- else %}
-              file: {{ application['binary'] }}
+              file: {{ target['binary'] }}
 {%- endif %}
           suit-parameter-image-size:
 {%- if encrypted %}
             file_direct: {{ app_encryption_dir }}/plain_text_size.txt
 {%- else %}
-            file: {{ application['binary'] }}
+            file: {{ target['binary'] }}
 {%- endif %}
       - suit-condition-vendor-identifier:
         - suit-send-record-success
@@ -92,7 +97,7 @@ SUIT_Envelope_Tagged:
     suit-payload-fetch:
     - suit-directive-set-component-index: 1
     - suit-directive-override-parameters:
-        suit-parameter-uri: "file://{{ application['filename'] }}"
+        suit-parameter-uri: "file://{{ target['filename'] }}"
 {%- if encrypted %}
         suit-parameter-encryption-info:
           file: {{ app_encryption_dir }}/suit_encryption_info.bin
