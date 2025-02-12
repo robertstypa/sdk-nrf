@@ -237,6 +237,10 @@ function(suit_create_package)
     sysbuild_get(BINARY_FILE IMAGE ${image} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
     sysbuild_get(target IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET KCONFIG)
     sysbuild_get(encrypt IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET_ENCRYPT KCONFIG)
+    get_property(is_variant_image TARGET ${image} PROPERTY NCS_VARIANT_APPLICATION)
+    if(DEFINED is_variant_image)
+      set(target "${target}_b")
+    endif()
 
     set(BINARY_FILE "${BINARY_FILE}.bin")
 
@@ -318,6 +322,10 @@ function(suit_create_package)
     if(NOT DEFINED INPUT_ENVELOPE_JINJA_FILE)
       message(SEND_ERROR "DFU: Creation of SUIT artifacts failed.")
       return()
+    endif()
+    get_property(is_variant_image TARGET ${image} PROPERTY NCS_VARIANT_APPLICATION)
+    if(DEFINED is_variant_image)
+      set(target "${target}_b")
     endif()
 
     set(ENVELOPE_YAML_FILE ${SUIT_ROOT_DIRECTORY}${target}.yaml)
@@ -598,6 +606,27 @@ endfunction()
 #   suit_setup_merge()
 #
 function(suit_setup_merge)
+  foreach(image ${IMAGES})
+    unset(target)
+    sysbuild_get(target IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET KCONFIG)
+    if(NOT DEFINED target OR target STREQUAL "")
+      continue()
+    endif()
+
+    sysbuild_get(IMAGE_BINARY_DIR IMAGE ${image} VAR APPLICATION_BINARY_DIR CACHE)
+    sysbuild_get(IMAGE_BINARY_FILE IMAGE ${image} VAR CONFIG_KERNEL_BIN_NAME KCONFIG)
+
+    unset(main_image)
+    get_property(main_image TARGET ${image} PROPERTY NCS_VARIANT_APPLICATION)
+    if(DEFINED main_image)
+      suit_add_merge_hex_file(
+        FILES "${IMAGE_BINARY_DIR}/zephyr/${IMAGE_BINARY_FILE}.hex"
+        DEPENDENCIES ${main_image}
+        TARGET ${target}
+      )
+    endif()
+  endforeach()
+
   sysbuild_get(BINARY_DIR IMAGE ${DEFAULT_IMAGE} VAR APPLICATION_BINARY_DIR CACHE)
   foreach(image ${IMAGES})
     set(ARTIFACTS_TO_MERGE)
@@ -612,6 +641,10 @@ function(suit_setup_merge)
     sysbuild_get(target IMAGE ${image} VAR CONFIG_SUIT_ENVELOPE_TARGET KCONFIG)
     if(NOT DEFINED target OR target STREQUAL "")
       message(STATUS "DFU: Target name for ${image} is not defined. Skipping.")
+      continue()
+    endif()
+    get_property(is_variant_image TARGET ${image} PROPERTY NCS_VARIANT_APPLICATION DEFINED)
+    if(is_variant_image)
       continue()
     endif()
 
