@@ -13,6 +13,8 @@ common:
   sysbuild: true
 tests:
   sample.suit.ab:
+    extra_args:
+    - SB_EXTRA_CONF_FILE="suit_mpi.conf"
     tags:
       - suit
       - bluetooth
