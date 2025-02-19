@@ -7,19 +7,16 @@
 # binary path: {{ radio_b['binary']}}
 # suit envelope: {{ artifacts_folder ~ radio_b['name'] }}.suit
 
-{%- set component_index = 0 %}
-{%- set component_list = [] %}
 {%- set mpi_root_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_ROOT_VENDOR_NAME']|default('nordicsemi.com') %}
 {%- set mpi_root_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_ROOT_CLASS_NAME']|default('nRF54H20_sample_root') %}
-{%- set mpi_application_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
-{%- set mpi_application_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_app') %}
-{%- set mpi_radio_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
-{%- set mpi_radio_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_rad') %}
-{%- if 'SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY' in sysbuild['config'] and sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] != '' %}
-  {%- set nordic_top = True %}
-{%- else %}
-  {%- set nordic_top = False %}
-{%- endif %}
+{%- set mpi_application_a_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_application_a_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_app') %}
+{%- set mpi_application_b_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_application_b_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_APP_LOCAL_2_CLASS_NAME']|default('nRF54H20_sample_app_local_2') %}
+{%- set mpi_radio_a_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_radio_a_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_1_CLASS_NAME']|default('nRF54H20_sample_rad') %}
+{%- set mpi_radio_b_vendor_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_2_VENDOR_NAME']|default('nordicsemi.com') %}
+{%- set mpi_radio_b_class_name = sysbuild['config']['SB_CONFIG_SUIT_MPI_RAD_LOCAL_2_CLASS_NAME']|default('nRF54H20_sample_rad_local_2') %}
 
 SUIT_Envelope_Tagged:
   suit-authentication-wrapper:
@@ -34,42 +31,90 @@ SUIT_Envelope_Tagged:
 {%- else %}
     suit-manifest-sequence-number: 1
 {%- endif %}
+
     suit-common:
       suit-components:
+
+      {%- set component_index = 0 %}
+      {%- set CAND_MFST_IDX = component_index %}
       - - CAND_MFST
         - 0
-{%- if radio is defined %}
-    {%- set component_index = component_index + 1 %}
-    {%- set rad_component_index = component_index %}
-    {{- component_list.append( rad_component_index ) or ""}}
-      - - INSTLD_MFST
-        - RFC4122_UUID:
-            namespace: {{ mpi_radio_vendor_name }}
-            name: {{ mpi_radio_class_name }}
-{%- endif %}
-{%- if application is defined %}
-    {%- set component_index = component_index + 1 %}
-    {%- set app_component_index = component_index %}
-    {{- component_list.append( app_component_index ) or ""}}
-      - - INSTLD_MFST
-        - RFC4122_UUID:
-            namespace: {{ mpi_application_vendor_name }}
-            name: {{ mpi_application_class_name }}
-{%- endif %}
 
-{%- set component_list_without_top = component_list[:] %}
-{%- if nordic_top %}
-    {%- set component_index = component_index + 1 %}
-    {%- set top_component_index = component_index %}
-    {{- component_list.append( top_component_index ) or ""}}
+      {%- set BOOT_STATUS_A = 1 %}
+      {%- set BOOT_STATUS_B = 2 %}
+      {%- set BOOT_STATUS_A_DEGRADED = 3 %}
+      {%- set BOOT_STATUS_B_DEGRADED = 4 %}
+      {%- set BOOT_STATUS_A_NO_RADIO = 5 %}
+      {%- set BOOT_STATUS_B_NO_RADIO = 6 %}
+      {%- set BOOT_STATUS_CANT_BOOT = 7 %}
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_BOOT_STATUS_IDX = component_index %}
+      - - MFST_VAR
+        - 256
+
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_SET_TO_UPDATE_MIRROR_IDX = component_index %}
+      - - MFST_VAR
+        - 257
+
+      {%- set SET_A = 1 %}
+      {%- set SET_B = 2 %}
+      # Any other value - SET_A
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_BOOT_PREFERENCE_IDX = component_index %}
+      - - MFST_VAR
+        - 0
+
+      # SET_A or SET_B
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_SET_TO_UPDATE_IDX = component_index %}
+      - - MFST_VAR
+        - 1
+
+      {%- set JUST_INSTALLED = 1 %}
+      {%- set NOT_CONFIRMED = 2 %}
+      {%- set CONFIRMED = 3 %}
+      # Any other value - JUST_INSTALLED
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_CONFIRM_SET_A_IDX = component_index %}
+      - - MFST_VAR
+        - 2
+
+      {%- set component_index = component_index + 1 %}
+      {%- set VAR_CONFIRM_SET_B_IDX = component_index %}
+      - - MFST_VAR
+        - 3
+
+      {%- set component_index = component_index + 1 %}
+      {%- set RAD_A_INSTLD_MFST_IDX = component_index %}
       - - INSTLD_MFST
         - RFC4122_UUID:
-            namespace: nordicsemi.com
-            name: nRF54H20_nordic_top
-{%- endif %}
+            namespace: {{ mpi_radio_a_vendor_name }}
+            name: {{ mpi_radio_a_class_name }}
+
+      {%- set component_index = component_index + 1 %}
+      {%- set RAD_B_INSTLD_MFST_IDX = component_index %}
+      - - INSTLD_MFST
+        - RFC4122_UUID:
+            namespace: {{ mpi_radio_b_vendor_name }}
+            name: {{ mpi_radio_b_class_name }}
+
+      {%- set component_index = component_index + 1 %}
+      {%- set APP_A_INSTLD_MFST_IDX = component_index %}
+      - - INSTLD_MFST
+        - RFC4122_UUID:
+            namespace: {{ mpi_application_a_vendor_name }}
+            name: {{ mpi_application_a_class_name }}
+
+      {%- set component_index = component_index + 1 %}
+      {%- set APP_B_INSTLD_MFST_IDX = component_index %}
+      - - INSTLD_MFST
+        - RFC4122_UUID:
+            namespace: {{ mpi_application_b_vendor_name }}
+            name: {{ mpi_application_b_class_name }}
 
       suit-shared-sequence:
-      - suit-directive-set-component-index: [{{ component_list|join(',') }}]
+      - suit-directive-set-component-index: [{{ RAD_A_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}, {{ APP_A_INSTLD_MFST_IDX }}, {{ APP_B_INSTLD_MFST_IDX }}]
       - suit-directive-override-parameters:
           suit-parameter-vendor-identifier:
             RFC4122_UUID: {{ mpi_root_vendor_name }}
@@ -77,47 +122,216 @@ SUIT_Envelope_Tagged:
             RFC4122_UUID:
               namespace: {{ mpi_root_vendor_name }}
               name: {{ mpi_root_class_name }}
-      - suit-condition-vendor-identifier:
-        - suit-send-record-success
-        - suit-send-record-failure
-        - suit-send-sysinfo-success
-        - suit-send-sysinfo-failure
-      - suit-condition-class-identifier:
-        - suit-send-record-success
-        - suit-send-record-failure
-        - suit-send-sysinfo-success
-        - suit-send-sysinfo-failure
+      - suit-condition-vendor-identifier: []
+      - suit-condition-class-identifier: []
+
       suit-dependencies:
         # Key is the index of suit-components that describe the dependency manifest
-        "0": {}
-{%- for component_element in component_list %}
-        "{{ component_element }}": {}
-{%- endfor %}
+        "{{ CAND_MFST_IDX }}": {}
+        "{{ RAD_A_INSTLD_MFST_IDX }}": {}
+        "{{ RAD_B_INSTLD_MFST_IDX }}": {}
+        "{{ APP_A_INSTLD_MFST_IDX }}": {}
+        "{{ APP_B_INSTLD_MFST_IDX }}": {}
+
+
     suit-validate:
-    - suit-directive-set-component-index: [{{ component_list_without_top|join(',') }}]
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
+    - suit-directive-set-component-index: {{ VAR_BOOT_PREFERENCE_IDX }}
+    - suit-directive-try-each:
+      # Checking if B is preferred and valid
+      - - suit-directive-set-component-index: {{ VAR_BOOT_PREFERENCE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        # B is preferred, checking B 'confirm' status
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_CANT_BOOT }}
+        - suit-directive-write: []
+        - suit-directive-try-each:
+          - - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_B_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ BOOT_STATUS_B }}
+            - suit-directive-write: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B }}
+        - suit-condition-check-content: []
+        # B 'confirm' status allows booting, validating app and radio
+        - suit-directive-set-component-index: [{{ APP_B_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Checking if A is valid (B is not preferred or invalid)
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_CANT_BOOT }}
+        - suit-directive-write: []
+        - suit-directive-try-each:
+          - - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_A_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ BOOT_STATUS_A }}
+            - suit-directive-write: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A }}
+        - suit-condition-check-content: []
+        # A 'confirm' status allows booting, validating app and radio
+        - suit-directive-set-component-index: [{{ APP_A_INSTLD_MFST_IDX }}, {{ RAD_A_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Checking if B is valid (however not preferred)
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_CANT_BOOT }}
+        - suit-directive-write: []
+        - suit-directive-try-each:
+          - - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_B_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+            - suit-directive-override-parameters:
+                suit-parameter-content: {{ BOOT_STATUS_B }}
+            - suit-directive-write: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B }}
+        - suit-condition-check-content: []
+        # B 'confirm' status allows booting, validating app and radio
+        - suit-directive-set-component-index: [{{ APP_B_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Bad. There is no set fulfilling basic criteria. Try to find ANY set, where both app and radio are valid
+      # Checking A
+      - - suit-directive-set-component-index: [{{ APP_A_INSTLD_MFST_IDX }}, {{ RAD_A_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_DEGRADED }}
+        - suit-directive-write: []
+
+      # Checking B
+      - - suit-directive-set-component-index: [{{ APP_B_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B_DEGRADED }}
+        - suit-directive-write: []
+
+      # Worse. Try to find valid app
+      # Checking A
+      - - suit-directive-set-component-index: {{ APP_A_INSTLD_MFST_IDX }}
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_NO_RADIO }}
+        - suit-directive-write: []
+
+      # Checking B
+      - - suit-directive-set-component-index: {{ APP_B_INSTLD_MFST_IDX }}
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B_NO_RADIO }}
+        - suit-directive-write: []
+
 
     suit-invoke:
-    - suit-directive-set-component-index: [{{ component_list_without_top|join(',') }}]
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
+    - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+    - suit-directive-try-each:
+      
+      # Path A
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A }}
+        - suit-condition-check-content: []
+        # set confirm status as NOT_CONFIRMED, if FW set A was just updated
+        - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_A_IDX }}
+        - suit-directive-try-each:
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-directive-write: []
+        - suit-directive-set-component-index: [{{ APP_A_INSTLD_MFST_IDX }}, {{ RAD_A_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Path B
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B }}
+        - suit-condition-check-content: []
+        # set confirm status as NOT_CONFIRMED, if FW set B was just updated
+        - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_B_IDX }}
+        - suit-directive-try-each:
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-condition-check-content: []
+          - - suit-directive-override-parameters:
+                suit-parameter-content: {{ NOT_CONFIRMED }}
+            - suit-directive-write: []
+        - suit-directive-set-component-index: [{{ APP_B_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Path A, degraded
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_DEGRADED }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: [{{ APP_A_INSTLD_MFST_IDX }}, {{ RAD_A_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Path B, degraded
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B_DEGRADED }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: [{{ APP_B_INSTLD_MFST_IDX }}, {{ RAD_B_INSTLD_MFST_IDX }}]
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Path A, just app image
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_NO_RADIO }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ APP_A_INSTLD_MFST_IDX }}
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
+      # Path B, just app image
+      - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_B_NO_RADIO }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ APP_B_INSTLD_MFST_IDX }}
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
 
 {%- if APP_ROOT_VERSION is defined %}
     suit-current-version: {{ APP_ROOT_VERSION }}
@@ -125,210 +339,193 @@ SUIT_Envelope_Tagged:
     suit-current-version: {{ DEFAULT_VERSION }}
 {%- endif %}
 
+
     suit-payload-fetch:
-{%- if radio is defined %}
-    - suit-directive-set-component-index: 0
-    - suit-directive-override-parameters:
-        suit-parameter-uri: "#{{ radio['name'] }}"
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
-{%- if application is defined %}
-    - suit-directive-set-component-index: 0
-    - suit-directive-override-parameters:
-        suit-parameter-uri: "#{{ application['name'] }}"
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
-{%- if nordic_top %}
-    - suit-directive-set-component-index: 0
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#top'
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
+    # setup VAR_SET_TO_UPDATE based on BOOT_STATUS
+    - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
+    - suit-directive-try-each:
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-directive-write: []
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_DEGRADED }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-directive-write: []
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ BOOT_STATUS_A_NO_RADIO }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-directive-write: []
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-directive-write: []
+
+    - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+    - suit-directive-try-each:      
+      # set A?
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-condition-check-content: []        
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+      # Set B?
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []        
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+
 
     suit-install:
-    - suit-directive-set-component-index: 0
-{%- if nordic_top %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#top'
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-run-sequence:
-      # A failed installation of the top component might damage other components.
-      # Thus, the installation should not fail - the application and radio
-      # components can still be installed, recovering the device if they
-      # were damaged during the top component installation process.
-      - suit-directive-override-parameters:
-          suit-parameter-soft-failure: True
-      - suit-directive-process-dependency:
-        - suit-send-record-success
-        - suit-send-record-failure
-        - suit-send-sysinfo-success
-        - suit-send-sysinfo-failure
-{%- endif %}
-{%- if application is defined %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#{{ application['name'] }}'
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
-{%- if radio is defined %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#{{ radio['name'] }}'
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
+    - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+    - suit-directive-try-each:      
+      # set A?
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_A_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ JUST_INSTALLED }}
+        - suit-directive-write: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_PREFERENCE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-directive-write: []
+      # set B?
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_B_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ JUST_INSTALLED }}
+        - suit-directive-write: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ VAR_BOOT_PREFERENCE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-directive-write: []
+
 
     suit-candidate-verification:
-    - suit-directive-set-component-index: 0
-# DO NOT CHANGE THE ORDER OF INSTALLING THE MANIFESTS HERE
-# The application manifest boots the flash companion image,
-# so it is needed to be processed before the radio image.
-{%- if application is defined %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#{{ application['name'] }}'
-        suit-parameter-image-digest:
-          suit-digest-algorithm-id: cose-alg-sha-256
-          suit-digest-bytes:
-            envelope: {{ artifacts_folder ~ application['name'] }}.suit
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-image-match:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
-{%- if radio is defined %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#{{ radio['name'] }}'
-        suit-parameter-image-digest:
-          suit-digest-algorithm-id: cose-alg-sha-256
-          suit-digest-bytes:
-            envelope: {{ artifacts_folder ~ radio['name'] }}.suit
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-image-match:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
-{%- if nordic_top %}
-    - suit-directive-override-parameters:
-        suit-parameter-uri: '#top'
-        suit-parameter-image-digest:
-          suit-digest-algorithm-id: cose-alg-sha-256
-          suit-digest-bytes:
-            envelope: {{ sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] }}/nordic_top.suit
-    - suit-directive-fetch:
-      - suit-send-record-failure
-    - suit-condition-image-match:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-condition-dependency-integrity:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-    - suit-directive-process-dependency:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-{%- endif %}
+    # copy SET_TO_UPDATE to SET_TO_UPDATE_MIRROR
+    - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+    - suit-directive-try-each:
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-directive-write: []
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-directive-write: []
+
+    - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+    - suit-directive-try-each:
+      # set A?
+      - - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_A }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+      # set B?
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ radio_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
+        - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: "#{{ application_b['name'] }}"
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        - suit-directive-process-dependency: []
 
     suit-manifest-component-id:
     - INSTLD_MFST
     - RFC4122_UUID:
         namespace: {{ mpi_root_vendor_name }}
         name: {{ mpi_root_class_name }}
+
   suit-integrated-dependencies:
-{%- if radio is defined %}
     '#{{ radio['name'] }}': {{ artifacts_folder ~ radio['name'] }}.suit
-{%- endif %}
-{%- if application is defined %}
+    '#{{ radio_b['name'] }}': {{ artifacts_folder ~ radio_b['name'] }}.suit
     '#{{ application['name'] }}': {{ artifacts_folder ~ application['name'] }}.suit
-{%- endif %}
-{%- if nordic_top %}
-    '#top': {{ sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] }}/nordic_top.suit
-{%- endif %}
+    '#{{ application_b['name'] }}': {{ artifacts_folder ~ application_b['name'] }}.suit
+
