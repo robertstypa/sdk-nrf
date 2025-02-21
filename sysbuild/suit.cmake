@@ -20,7 +20,7 @@ if(SB_CONFIG_SUIT_BUILD_FLASH_COMPANION)
   )
 endif()
 
-if(SB_CONFIG_SUIT_BUILD_RECOVERY)
+if(SB_CONFIG_SUIT_BUILD_RECOVERY AND NOT SB_CONFIG_SUIT_RECOVERY_APPLICATION_NONE)
   # Calculate the network board target
   string(REPLACE "/" ";" split_board_qualifiers "${BOARD_QUALIFIERS}")
   list(GET split_board_qualifiers 1 target_soc)
@@ -75,7 +75,7 @@ if(SB_CONFIG_SUIT_BUILD_AB_UPDATE)
       SOURCE_DIR ${NET_SAMPLE_SOURCE_DIR}
       BOARD ${NET_BOARD_TARGET}
       BOARD_REVISION ${BOARD_REVISION}
-    )    
+    )
 
     set_config_string(${NET_IMAGE} CONFIG_SUIT_ENVELOPE_TARGET "radio_b")
     set_config_bool(${NET_IMAGE} CONFIG_NRF_REGTOOL_GENERATE_UICR n)

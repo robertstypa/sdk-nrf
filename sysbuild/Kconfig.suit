@@ -168,12 +168,18 @@ if SUIT_BUILD_RECOVERY
 
 choice SUIT_RECOVERY_APPLICATION
 	prompt "Select SUIT recovery application"
+	default SUIT_RECOVERY_APPLICATION_NONE if SUIT_BUILD_AB_UPDATE
 	default SUIT_RECOVERY_APPLICATION_DEFAULT
 
 config SUIT_RECOVERY_APPLICATION_DEFAULT
 	bool "Use the default recovery application"
 	help
 	  Use the default recovery application using BluetoothLE and SMP.
+
+config SUIT_RECOVERY_APPLICATION_NONE
+	bool "Do not build the recovery application"
+	help
+	  Provide a recovery manifest, but do not build a recovery application.
 
 endchoice
 
