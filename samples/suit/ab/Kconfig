@@ -28,4 +28,8 @@ config ID_VAR_CONFIRM_SET_B
 	int "Id of Manfiest-controlled variable representing after-update confirmation state for image set B"
 	default 3
 
+config EMULATE_APP_HEALTH_CHECK_FAILURE
+	bool "Blocks confirmation of being healthy after the update"
+	default n
+
 source "Kconfig.zephyr"
