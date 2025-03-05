@@ -838,6 +838,7 @@ static void dfu_cache_ipuc_init(void)
 	for (size_t i = 1; i < ARRAY_SIZE(dfu_partitions_ext); i++) {
 		/* Calculating memory-mapped address for cache pool */
 		struct dfu_cache_partition_ext *partition = &dfu_partitions_ext[i];
+		(void)partition; /* Suppress warning if cache IPUC is not used */
 
 #ifdef CONFIG_SUIT_CACHE_SDFW_IPUC_ID
 		if (partition->id == CONFIG_SUIT_CACHE_SDFW_IPUC_ID) {

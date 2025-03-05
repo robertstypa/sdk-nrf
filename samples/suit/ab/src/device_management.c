@@ -8,19 +8,9 @@
 #include <suit_manifest_variables.h>
 #include <device_management.h>
 #include <zephyr/logging/log.h>
+#include <sdfw/sdfw_services/suit_service.h>
 
 LOG_MODULE_DECLARE(AB, CONFIG_SUIT_LOG_LEVEL);
-
-/* Definitions below reflect a way of usage of manifest-controlled variables
- * in this specific application.
- */
-#define BOOT_STATUS_A	       1
-#define BOOT_STATUS_B	       2
-#define BOOT_STATUS_A_DEGRADED 3
-#define BOOT_STATUS_B_DEGRADED 4
-#define BOOT_STATUS_A_NO_RADIO 5
-#define BOOT_STATUS_B_NO_RADIO 6
-#define BOOT_STATUS_CANT_BOOT  7
 
 #define NOT_CONFIRMED 2
 #define CONFIRMED     3
@@ -58,6 +48,39 @@ static bool app_domain_healthy(void)
 	return true;
 }
 
+bool device_is_in_recovery_mode(void)
+{
+	static suit_boot_mode_t mode = SUIT_BOOT_MODE_UNKNOWN;
+	suit_plat_err_t err = SUIT_PLAT_SUCCESS;
+
+	if (mode == SUIT_BOOT_MODE_UNKNOWN) {
+		err  = suit_boot_mode_read(&mode);
+		if (err != SUIT_PLAT_SUCCESS) {
+			LOG_ERR("Cannot get the boot mode");
+			mode = SUIT_BOOT_MODE_FAIL_STARTUP;
+		}
+	}
+
+	return (mode == SUIT_BOOT_MODE_POST_INVOKE_RECOVERY);
+}
+
+uint32_t device_boot_status_get(void)
+{
+	suit_plat_err_t err = SUIT_PLAT_SUCCESS;
+	static uint32_t mfst_var_boot_status = 0;
+
+	if (mfst_var_boot_status == 0) {
+		err = suit_mfst_var_get(CONFIG_ID_VAR_BOOT_STATUS, &mfst_var_boot_status);
+		if (err != SUIT_PLAT_SUCCESS) {
+			LOG_ERR("Cannot get a device boot status");
+			mfst_var_boot_status = BOOT_STATUS_CANT_BOOT;
+		}
+	}
+
+
+	return mfst_var_boot_status;
+}
+
 void device_healthcheck(void)
 {
 	suit_plat_err_t err = SUIT_PLAT_SUCCESS;
@@ -66,9 +89,9 @@ void device_healthcheck(void)
 	uint32_t mfst_var_confirm_status = CONFIRMED;
 	uint32_t id_var_confirm_set = CONFIG_ID_VAR_CONFIRM_SET_A;
 
-	err = suit_mfst_var_get(CONFIG_ID_VAR_BOOT_STATUS, &mfst_var_boot_status);
-	if (err != SUIT_PLAT_SUCCESS) {
-		LOG_ERR("Cannot get a device boot status");
+	mfst_var_boot_status = device_boot_status_get();
+
+	if (mfst_var_boot_status == BOOT_STATUS_CANT_BOOT) {
 		return;
 	}
 
@@ -158,6 +181,10 @@ void device_boot_state_report(void)
 	uint32_t mfst_var_confirm_set_a = 0;
 	uint32_t mfst_var_confirm_set_b = 0;
 
+	if (device_is_in_recovery_mode()) {
+		printk("Boot in RECOVERY mode, probably the root manifest is damaged!\n");
+	}
+
 	err = suit_mfst_var_get(CONFIG_ID_VAR_BOOT_PREFERENCE, &mfst_var_boot_preference);
 	if (err == SUIT_PLAT_SUCCESS) {
 		if (mfst_var_boot_preference == BOOT_PREFERENCE_B) {
@@ -167,23 +194,22 @@ void device_boot_state_report(void)
 		}
 	}
 
-	err = suit_mfst_var_get(CONFIG_ID_VAR_BOOT_STATUS, &mfst_var_boot_status);
-	if (err == SUIT_PLAT_SUCCESS) {
-		if (mfst_var_boot_status == BOOT_STATUS_A) {
-			printk("Boot status: image set A active\n");
-		} else if (mfst_var_boot_status == BOOT_STATUS_B) {
-			printk("Boot status: image set B active\n");
-		} else if (mfst_var_boot_status == BOOT_STATUS_A_DEGRADED) {
-			printk("Boot status: image set A active, degraded mode\n");
-		} else if (mfst_var_boot_status == BOOT_STATUS_B_DEGRADED) {
-			printk("Boot status: app image B active, degraded mode\n");
-		} else if (mfst_var_boot_status == BOOT_STATUS_A_NO_RADIO) {
-			printk("Boot status: app image A active, no radio, degraded mode\n");
-		} else if (mfst_var_boot_status == BOOT_STATUS_B_NO_RADIO) {
-			printk("Boot status: app image B active, no radio, degraded mode\n");
-		} else {
-			printk("Boot status: unrecognized\n");
-		}
+	mfst_var_boot_status = device_boot_status_get();
+
+	if (mfst_var_boot_status == BOOT_STATUS_A) {
+		printk("Boot status: image set A active\n");
+	} else if (mfst_var_boot_status == BOOT_STATUS_B) {
+		printk("Boot status: image set B active\n");
+	} else if (mfst_var_boot_status == BOOT_STATUS_A_DEGRADED) {
+		printk("Boot status: image set A active, degraded mode\n");
+	} else if (mfst_var_boot_status == BOOT_STATUS_B_DEGRADED) {
+		printk("Boot status: app image B active, degraded mode\n");
+	} else if (mfst_var_boot_status == BOOT_STATUS_A_NO_RADIO) {
+		printk("Boot status: app image A active, no radio, degraded mode\n");
+	} else if (mfst_var_boot_status == BOOT_STATUS_B_NO_RADIO) {
+		printk("Boot status: app image B active, no radio, degraded mode\n");
+	} else {
+		printk("Boot status: unrecognized\n");
 	}
 
 	err = suit_mfst_var_get(CONFIG_ID_VAR_CONFIRM_SET_A, &mfst_var_confirm_set_a);
