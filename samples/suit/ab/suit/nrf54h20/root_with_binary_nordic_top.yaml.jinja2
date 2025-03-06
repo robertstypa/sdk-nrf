@@ -1,4 +1,4 @@
-# My name is application image B, my artifacts are available for you: 
+# My name is application image B, my artifacts are available for you:
 # name: {{ application_b['name']}}
 # binary path: {{ application_b['binary']}}
 # suit envelope: {{ artifacts_folder ~ application_b['name'] }}.suit
@@ -261,7 +261,7 @@ SUIT_Envelope_Tagged:
     suit-invoke:
     - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
     - suit-directive-try-each:
-      
+
       # Path A
       - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
         - suit-directive-override-parameters:
@@ -349,19 +349,6 @@ SUIT_Envelope_Tagged:
 
 
     suit-payload-fetch:
-    # Verify the installed SoC Binaries version is not too old to perform the update
-    # The version check below should be modified if a different installed SoC Binaries version
-    # is required for the update.
-    - suit-directive-set-component-index: {{ TOP_INSTLD_MFST_IDX }}
-    - suit-directive-override-parameters:
-        suit-parameter-version:
-          suit-condition-version-comparison-greater-equal: {{ MIN_NORDIC_TOP_VERSION }}
-    - suit-condition-version:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-
     # setup VAR_SET_TO_UPDATE based on BOOT_STATUS
     - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
     - suit-directive-try-each:
@@ -391,12 +378,61 @@ SUIT_Envelope_Tagged:
             suit-parameter-content: {{ SET_A }}
         - suit-directive-write: []
 
-    - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
-    - suit-directive-try-each:      
-      # set A?
+    # Verify the candidate compatibility with the currently installed manifests
+    - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+    - suit-directive-try-each:
+      # Verify top?
       - - suit-directive-override-parameters:
+            suit-parameter-uri: '#top'
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        # The top manifest is available in the envelope, verify that it can be installed.
+        # Errors for this sequence from now on will cause manifest processing failure.
+        - suit-directive-override-parameters:
+            suit-parameter-soft-failure: False
+        # Update of nordic top is only possible from the A path (using B as mirror)
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        # Verify that the application and radio images in the A slot are
+        # not to old for the nordic top image being installed.
+        - suit-directive-set-component-index: {{ APP_A_INSTLD_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_COMPATIBLE_APP_VERSION_FOR_NORDIC_TOP }}
+        - suit-condition-version: []
+        - suit-directive-set-component-index: {{ RAD_A_INSTLD_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_COMPATIBLE_RAD_VERSION_FOR_NORDIC_TOP }}
+        - suit-condition-version: []
+      # Verify application?
+      - - suit-directive-set-component-index: {{ TOP_INSTLD_MFST_IDX }}
+        # The top manifest is not available in the envelope - we are in the application installation path.
+        # Verify the installed nordic top version is not too old to perform the update.
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_NORDIC_TOP_VERSION }}
+        - suit-condition-version: []
+
+    - suit-directive-try-each:
+      # Install top?
+      - - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: '#top'
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        # The top manifest is available in the envelope.
+        # Do not verify the application and radio images, as they won't be installed.
+        - suit-directive-override-parameters:
+            suit-parameter-soft-failure: False
+        - suit-directive-process-dependency: []
+      # set A?
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
+        - suit-directive-override-parameters:
             suit-parameter-content: {{ SET_A }}
-        - suit-condition-check-content: []        
+        - suit-condition-check-content: []
         - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
         - suit-directive-override-parameters:
             suit-parameter-uri: "#{{ radio['name'] }}"
@@ -413,7 +449,7 @@ SUIT_Envelope_Tagged:
       - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
         - suit-directive-override-parameters:
             suit-parameter-content: {{ SET_B }}
-        - suit-condition-check-content: []        
+        - suit-condition-check-content: []
         - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
         - suit-directive-override-parameters:
             suit-parameter-uri: "#{{ radio_b['name'] }}"
@@ -430,9 +466,21 @@ SUIT_Envelope_Tagged:
 
     suit-install:
     - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
-    - suit-directive-try-each:      
+    - suit-directive-try-each:
+      # Install top?
+      - - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: '#top'
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        # The top manifest is available in the envelope.
+        # Do not install the application and radio images.
+        - suit-directive-override-parameters:
+            suit-parameter-soft-failure: False
+        - suit-directive-process-dependency: []
       # set A?
-      - - suit-directive-override-parameters:
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
             suit-parameter-content: {{ SET_A }}
         - suit-condition-check-content: []
         - suit-directive-set-component-index: {{ VAR_CONFIRM_SET_A_IDX }}
@@ -483,19 +531,6 @@ SUIT_Envelope_Tagged:
 
 
     suit-candidate-verification:
-    # Verify the installed SoC Binaries version is not too old to perform the update
-    # The version check below should be modified if a different installed SoC Binaries version
-    # is required for the update.
-    - suit-directive-set-component-index: {{ TOP_INSTLD_MFST_IDX }}
-    - suit-directive-override-parameters:
-        suit-parameter-version:
-          suit-condition-version-comparison-greater-equal: {{ MIN_NORDIC_TOP_VERSION }}
-    - suit-condition-version:
-      - suit-send-record-success
-      - suit-send-record-failure
-      - suit-send-sysinfo-success
-      - suit-send-sysinfo-failure
-
     # copy SET_TO_UPDATE to SET_TO_UPDATE_MIRROR
     - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_IDX }}
     - suit-directive-try-each:
@@ -515,10 +550,60 @@ SUIT_Envelope_Tagged:
             suit-parameter-content: {{ SET_B }}
         - suit-directive-write: []
 
+    # Verify the candidate compatibility with the currently installed manifests
+    - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+    - suit-directive-try-each:
+      # Verify top?
+      - - suit-directive-override-parameters:
+            suit-parameter-uri: '#top'
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        # The top manifest is available in the envelope, verify that it can be installed.
+        # Errors for this sequence from now on will cause manifest processing failure.
+        - suit-directive-override-parameters:
+            suit-parameter-soft-failure: False
+        # Update of nordic top is only possible from the A path (using B as mirror)
+        - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-content: {{ SET_B }}
+        - suit-condition-check-content: []
+        # Verify that the application and radio images in the A slot are
+        # not to old for the nordic top image being installed.
+        - suit-directive-set-component-index: {{ APP_A_INSTLD_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_COMPATIBLE_APP_VERSION_FOR_NORDIC_TOP }}
+        - suit-condition-version: []
+        - suit-directive-set-component-index: {{ RAD_A_INSTLD_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_COMPATIBLE_RAD_VERSION_FOR_NORDIC_TOP }}
+        - suit-condition-version: []
+      # Verify application?
+      - - suit-directive-set-component-index: {{ TOP_INSTLD_MFST_IDX }}
+        # The top manifest is not available in the envelope - we are in the application installation path.
+        # Verify the installed nordic top version is not too old to perform the update.
+        - suit-directive-override-parameters:
+            suit-parameter-version:
+              suit-condition-version-comparison-greater-equal: {{ MIN_NORDIC_TOP_VERSION }}
+        - suit-condition-version: []
+
     - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
     - suit-directive-try-each:
+      # Install top?
+      - - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
+        - suit-directive-override-parameters:
+            suit-parameter-uri: '#top'
+        - suit-directive-fetch: []
+        - suit-condition-dependency-integrity: []
+        # The top manifest is available in the envelope.
+        # Do not verify the application and radio images, as they won't be installed.
+        - suit-directive-override-parameters:
+            suit-parameter-soft-failure: False
+        - suit-directive-process-dependency: []
       # set A?
-      - - suit-directive-override-parameters:
+      - - suit-directive-set-component-index: {{ VAR_SET_TO_UPDATE_MIRROR_IDX }}
+        - suit-directive-override-parameters:
             suit-parameter-content: {{ SET_A }}
         - suit-condition-check-content: []
         - suit-directive-set-component-index: {{ CAND_MFST_IDX }}
@@ -558,8 +643,12 @@ SUIT_Envelope_Tagged:
         name: {{ mpi_root_class_name }}
 
   suit-integrated-dependencies:
+
+{%- if 'SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY' in sysbuild['config'] and sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] != '' %}
+    '#top': {{ sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] }}/nordic_top.suit
+{%- else %}
     '#{{ radio['name'] }}': {{ artifacts_folder ~ radio['name'] }}.suit
     '#{{ radio_b['name'] }}': {{ artifacts_folder ~ radio_b['name'] }}.suit
     '#{{ application['name'] }}': {{ artifacts_folder ~ application['name'] }}.suit
     '#{{ application_b['name'] }}': {{ artifacts_folder ~ application_b['name'] }}.suit
-
+{%- endif %}
