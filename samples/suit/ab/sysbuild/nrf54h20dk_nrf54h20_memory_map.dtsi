@@ -90,11 +90,11 @@
 		#address-cells = < 0x1 >;
 		#size-cells = < 0x1 >;
 
-		cpuapp_slot_b_partition: partition@14c000 {
+		dfu_target_img_22: cpuapp_slot_b_partition: partition@14c000 {
 			reg = < 0x14c000 DT_SIZE_K(592) >;
 		};
 
-		cpuapp_slot_a_partition: partition@b8000 {
+		dfu_target_img_21: cpuapp_slot_a_partition: partition@b8000 {
 			reg = < 0xb8000 DT_SIZE_K(592) >;
 		};
 	};
@@ -106,11 +106,11 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 
-		cpurad_slot_b_partition: partition@86000 {
+		dfu_target_img_32: cpurad_slot_b_partition: partition@86000 {
 			reg = <0x86000 DT_SIZE_K(200)>;
 		};
 
-		cpurad_slot_a_partition: partition@54000 {
+		dfu_target_img_31: cpurad_slot_a_partition: partition@54000 {
 			reg = < 0x54000 DT_SIZE_K(200) >;
 		};
 	};
