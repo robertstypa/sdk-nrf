@@ -645,7 +645,7 @@ SUIT_Envelope_Tagged:
   suit-integrated-dependencies:
 
 {%- if 'SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY' in sysbuild['config'] and sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] != '' %}
-    '#top': {{ sysbuild['config']['SB_CONFIG_SUIT_ENVELOPE_NORDIC_TOP_DIRECTORY'] }}/nordic_top.suit
+    '#top': {{ artifacts_folder }}nordic_top.suit
 {%- else %}
     '#{{ radio['name'] }}': {{ artifacts_folder ~ radio['name'] }}.suit
     '#{{ radio_b['name'] }}': {{ artifacts_folder ~ radio_b['name'] }}.suit
