@@ -70,6 +70,11 @@ SUIT_Envelope_Tagged:
       - suit-condition-class-identifier: []
 
     suit-validate:
+    - suit-directive-set-component-index: {{ INACTIVE_IMG_IDX }}
+    # Declare inactive application partition as IPUC
+    - suit-directive-override-parameters:
+        suit-parameter-image-size:
+          raw: 0
     - suit-directive-set-component-index: {{ ACTIVE_IMG_IDX }}
     - suit-condition-image-match: []
 
