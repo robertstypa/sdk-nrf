@@ -322,6 +322,16 @@ SUIT_Envelope_Tagged:
         - suit-directive-set-component-index: {{ APP_A_INSTLD_MFST_IDX }}
         - suit-condition-dependency-integrity: []
         - suit-directive-process-dependency: []
+        # Still run validate for the radio manifest, only in order to set
+        # the inactive radio partition as IPUC.
+        # The sequence will fail, but due to the soft-failure parameter
+        # it will not cause the whole current try-each sequence failure.
+        - suit-directive-run-sequence:
+          - suit-directive-set-component-index: {{ RAD_A_INSTLD_MFST_IDX }}
+          - suit-directive-override-parameters:
+              suit-parameter-soft-failure: True
+          - suit-condition-dependency-integrity: []
+          - suit-directive-process-dependency: []
 
       # Path B, just app image
       - - suit-directive-set-component-index: {{ VAR_BOOT_STATUS_IDX }}
@@ -331,6 +341,16 @@ SUIT_Envelope_Tagged:
         - suit-directive-set-component-index: {{ APP_B_INSTLD_MFST_IDX }}
         - suit-condition-dependency-integrity: []
         - suit-directive-process-dependency: []
+        # Still run validate for the radio manifest, only in order to set
+        # the inactive radio partition as IPUC.
+        # The sequence will fail, but due to the soft-failure parameter
+        # it will not cause the whole current try-each sequence failure.
+        - suit-directive-run-sequence:
+          - suit-directive-set-component-index: {{ RAD_B_INSTLD_MFST_IDX }}
+          - suit-directive-override-parameters:
+              suit-parameter-soft-failure: True
+          - suit-condition-dependency-integrity: []
+          - suit-directive-process-dependency: []
 
 
 {%- if APP_ROOT_VERSION is defined %}
