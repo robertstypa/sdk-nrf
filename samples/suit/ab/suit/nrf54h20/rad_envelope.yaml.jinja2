@@ -70,12 +70,20 @@ SUIT_Envelope_Tagged:
       - suit-condition-class-identifier: []
 
     suit-validate:
+    - suit-directive-set-component-index: {{ INACTIVE_IMG_IDX }}
+    # Declare inactive radio partition as IPUC
+    # This has to be done here to handle the case in which the
+    # radio for both A and B slots is damaged - the IPUC
+    # for the inactive radio component still has to be declared.
+    - suit-directive-override-parameters:
+        suit-parameter-image-size:
+          raw: 0
     - suit-directive-set-component-index: {{ ACTIVE_IMG_IDX }}
     - suit-condition-image-match: []
 
     suit-invoke:
     - suit-directive-set-component-index: {{ INACTIVE_IMG_IDX }}
-    # Declare inactive radio partition as IPUC
+    # Declare inactive application partition as IPUC
     - suit-directive-override-parameters:
         suit-parameter-image-size:
           raw: 0
