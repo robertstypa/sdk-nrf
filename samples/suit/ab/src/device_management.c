@@ -9,6 +9,7 @@
 #include <device_management.h>
 #include <zephyr/logging/log.h>
 #include <sdfw/sdfw_services/suit_service.h>
+#include <zephyr/bluetooth/bluetooth.h>
 
 LOG_MODULE_DECLARE(AB, CONFIG_SUIT_LOG_LEVEL);
 
@@ -25,10 +26,7 @@ LOG_MODULE_DECLARE(AB, CONFIG_SUIT_LOG_LEVEL);
  */
 static bool radio_domain_healthy(void)
 {
-	/* Let's emulate a delay related to IPC communication
-	 */
-	k_msleep(1000);
-	return true;
+	return bt_is_ready();
 }
 
 /** @brief Application firmware self test
