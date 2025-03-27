@@ -42,7 +42,7 @@ function(suit_nordic_artifacts_prepare nordic_top_directory pull)
   if(pull)
     list(APPEND nordic_extract_args "--input-envelope" "${nordic_top_directory}/nordic_top.suit")
     list(APPEND nordic_extract_args "--output-envelope" "nordic_top.suit")
-    list(APPEND nordic_extract_args "--omit-payload-regex" "(?!.*secdom.*\.bin|.*sysctl_v.*\.bin).*")
+    list(APPEND nordic_extract_args "--omit-payload-regex" "(?!.*sec.*\.bin|.*sysctl_v.*\.bin).*")
     list(APPEND nordic_extract_args "--dependency-regex" "(#secdom|#sysctrl)")
     list(APPEND nordic_extract_args "--payload-file-prefix-to-remove" "file://")
 
@@ -183,7 +183,7 @@ endfunction()
 #   'output_file' - path to output cache partition file
 function(suit_create_nordic_cache_partition args output_file)
   list(APPEND args "--output-file" "${output_file}")
-  list(APPEND args "--omit-payload-regex" "'(?!.*secdom.*\.bin|.*sysctl_v.*\.bin).*'")
+  list(APPEND args "--omit-payload-regex" "'(?!.*sec.*\.bin|.*sysctl_v.*\.bin).*'")
   list(APPEND args "--dependency-regex" "'(#top|#secdom|#sysctrl)'")
 
   set_property(
